@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Castify — Turn YouTube Playlists into Podcast Feeds</title>
+  <meta name="description" content="Turn any YouTube playlist into a private podcast feed. A cross-platform desktop app for macOS, Windows, and Linux.">
+  <link rel="icon" type="image/png" href="images/icon.png">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --purple-dark: #110d24;
+      --purple-mid: #1e1640;
+      --purple-light: #2d2060;
+      --accent: #a78bfa;
+      --accent-light: #c4b5fd;
+      --white: #ffffff;
+      --white-dim: rgba(255, 255, 255, 0.7);
+      --white-faint: rgba(255, 255, 255, 0.08);
+      --white-border: rgba(255, 255, 255, 0.12);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: linear-gradient(180deg, var(--purple-mid) 0%, var(--purple-dark) 100%);
+      color: var(--white);
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ---- Fade-in animation ---- */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ---- Hero ---- */
+    .hero {
+      text-align: center;
+      padding: 100px 0 80px;
+    }
+
+    .hero-icon {
+      width: 160px;
+      height: 160px;
+      border-radius: 36px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      margin-bottom: 32px;
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+    }
+
+    .hero .tagline {
+      font-size: 20px;
+      color: var(--white-dim);
+      max-width: 480px;
+      margin: 0 auto 36px;
+    }
+
+    .btn-download {
+      display: inline-block;
+      background: var(--accent);
+      color: var(--purple-dark);
+      font-size: 17px;
+      font-weight: 600;
+      padding: 14px 36px;
+      border-radius: 980px;
+      text-decoration: none;
+      transition: background 0.2s ease, transform 0.15s ease;
+    }
+    .btn-download:hover {
+      background: var(--accent-light);
+      transform: scale(1.04);
+    }
+    .btn-download:active {
+      transform: scale(0.98);
+    }
+
+    .hero .platform-label {
+      display: block;
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--white-dim);
+    }
+
+    .hero .badge {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--white-dim);
+      background: var(--white-faint);
+      padding: 6px 14px;
+      border-radius: 980px;
+      border: 1px solid var(--white-border);
+    }
+
+    .hero .other-platforms {
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--white-dim);
+    }
+
+    .hero .other-platforms a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .hero .other-platforms a:hover {
+      text-decoration: underline;
+    }
+
+    .hero .other-platforms .sep {
+      opacity: 0.4;
+      margin: 0 4px;
+    }
+
+    /* ---- Section titles ---- */
+    .section-title {
+      text-align: center;
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 48px;
+    }
+
+    /* ---- Features ---- */
+    .features {
+      padding: 60px 0 80px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--white-faint);
+      border: 1px solid var(--white-border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .feature-icon {
+      font-size: 32px;
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .feature-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--white-dim);
+      line-height: 1.55;
+    }
+
+    /* ---- How it works ---- */
+    .how-it-works {
+      padding: 60px 0 80px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      text-align: center;
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--purple-dark);
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .step h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      font-size: 15px;
+      color: var(--white-dim);
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    /* ---- Footer ---- */
+    footer {
+      border-top: 1px solid var(--white-border);
+      padding: 32px 0;
+      text-align: center;
+      font-size: 14px;
+      color: var(--white-dim);
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    footer .footer-inner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    footer .sep {
+      opacity: 0.4;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 768px) {
+      .hero {
+        padding: 72px 0 56px;
+      }
+      .hero-icon {
+        width: 120px;
+        height: 120px;
+        border-radius: 28px;
+      }
+      .hero h1 {
+        font-size: 32px;
+      }
+      .hero .tagline {
+        font-size: 17px;
+      }
+      .section-title {
+        font-size: 28px;
+        margin-bottom: 32px;
+      }
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      .steps {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <img src="images/icon.png" alt="Castify app icon" class="hero-icon" width="160" height="160">
+      <h1>Castify</h1>
+      <p class="tagline">Turn YouTube playlists into private podcast feeds</p>
+      <a id="download-btn" href="https://github.com/Apollo-Audio/castify-web/releases/latest" class="btn-download">Download for macOS</a>
+      <span id="platform-label" class="platform-label"></span>
+      <br>
+      <span class="badge">macOS 12+ &middot; Windows 10+ &middot; Linux</span>
+      <div id="other-platforms" class="other-platforms"></div>
+      <script>
+        (function() {
+          var base = 'https://github.com/Apollo-Audio/castify-web/releases/latest/download/';
+          var btn = document.getElementById('download-btn');
+          var label = document.getElementById('platform-label');
+          var others = document.getElementById('other-platforms');
+          var ua = navigator.userAgent;
+
+          var links = {
+            macArm: { url: base + 'Castify_aarch64.dmg', label: 'Apple Silicon' },
+            macIntel: { url: base + 'Castify_x64.dmg', label: 'Intel' },
+            win: { url: base + 'Castify_x64-setup.exe', label: 'Windows' },
+            linux: { url: base + 'Castify_amd64.AppImage', label: 'Linux' }
+          };
+
+          function setDownload(platform, arch) {
+            if (platform === 'mac') {
+              btn.textContent = 'Download for macOS';
+              if (arch === 'arm') {
+                btn.href = links.macArm.url;
+                label.textContent = 'Apple Silicon';
+              } else {
+                btn.href = links.macIntel.url;
+                label.textContent = 'Intel';
+              }
+              others.innerHTML = 'Also available for <a href="' + links.win.url + '">Windows</a><span class="sep">&middot;</span><a href="' + links.linux.url + '">Linux</a>';
+            } else if (platform === 'win') {
+              btn.textContent = 'Download for Windows';
+              btn.href = links.win.url;
+              label.textContent = '64-bit';
+              others.innerHTML = 'Also available for <a href="' + links.macArm.url + '">macOS</a><span class="sep">&middot;</span><a href="' + links.linux.url + '">Linux</a>';
+            } else if (platform === 'linux') {
+              btn.textContent = 'Download for Linux';
+              btn.href = links.linux.url;
+              label.textContent = 'AppImage, x86_64';
+              others.innerHTML = 'Also available for <a href="' + links.macArm.url + '">macOS</a><span class="sep">&middot;</span><a href="' + links.win.url + '">Windows</a>';
+            }
+          }
+
+          if (/Windows/.test(ua)) {
+            setDownload('win');
+          } else if (/Linux/.test(ua)) {
+            setDownload('linux');
+          } else if (/Mac/.test(ua)) {
+            // Try to detect Apple Silicon vs Intel
+            if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+              navigator.userAgentData.getHighEntropyValues(['architecture']).then(function(v) {
+                setDownload('mac', v.architecture === 'arm' ? 'arm' : 'x86');
+              });
+            } else {
+              setDownload('mac', 'arm');
+            }
+          } else {
+            others.innerHTML = '<a href="' + links.macArm.url + '">macOS</a><span class="sep">&middot;</span><a href="' + links.win.url + '">Windows</a><span class="sep">&middot;</span><a href="' + links.linux.url + '">Linux</a>';
+          }
+        })();
+      </script>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <div class="container">
+      <h2 class="section-title fade-in">Features</h2>
+      <div class="features-grid">
+        <div class="feature-card fade-in">
+          <span class="feature-icon" aria-hidden="true">🔗</span>
+          <h3>Playlist to RSS</h3>
+          <p>Paste a YouTube playlist URL and get a standard RSS feed you can subscribe to in any podcast app.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="feature-icon" aria-hidden="true">🎧</span>
+          <h3>Audio Extraction</h3>
+          <p>Automatically downloads and converts video to high-quality M4A audio, ready for listening.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="feature-icon" aria-hidden="true">🔄</span>
+          <h3>Background Sync</h3>
+          <p>Periodically checks for new videos and adds them to your feed automatically.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="feature-icon" aria-hidden="true">🔒</span>
+          <h3>Private Feeds</h3>
+          <p>Your podcast feeds are private and personal. No public hosting or third-party services.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="feature-icon" aria-hidden="true">📌</span>
+          <h3>System Tray</h3>
+          <p>Runs quietly in your system tray. Syncs in the background without getting in the way.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="feature-icon" aria-hidden="true">💻</span>
+          <h3>Cross-Platform</h3>
+          <p>Native performance on macOS, Windows, and Linux. Built with Tauri and Rust.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="how-it-works">
+    <div class="container">
+      <h2 class="section-title fade-in">How It Works</h2>
+      <div class="steps">
+        <div class="step fade-in">
+          <div class="step-number">1</div>
+          <h3>Add Playlist</h3>
+          <p>Paste a YouTube playlist URL into Castify to create a new podcast feed.</p>
+        </div>
+        <div class="step fade-in">
+          <div class="step-number">2</div>
+          <h3>Convert</h3>
+          <p>Castify downloads each video, extracts the audio, and builds your feed.</p>
+        </div>
+        <div class="step fade-in">
+          <div class="step-number">3</div>
+          <h3>Subscribe</h3>
+          <p>Copy the RSS feed URL into your favorite podcast app and start listening.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <span>Built by Apollo Audio</span>
+        <span class="sep">&middot;</span>
+        <a href="https://github.com/Apollo-Audio/castify-client">GitHub</a>
+        <span class="sep">&middot;</span>
+        <span>&copy; 2026</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scroll fade-in observer -->
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
